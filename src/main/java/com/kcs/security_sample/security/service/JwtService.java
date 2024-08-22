@@ -8,25 +8,23 @@ import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
-import java.security.Key;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class JwtService {
-
-    private static final Logger logger = LoggerFactory.getLogger(JwtService.class);
 
     private final UserRepository userRepository;
 
@@ -42,11 +40,17 @@ public class JwtService {
     }
 
     public String generateToken(User user) {
-        logger.info("Generating token for user: {}, role: {}", user.getAccountId(), user.getRole());
+        log.info("Generating token for user: {}, role: {}", user.getAccountId(), user.getRole());
+
+        List<String> authorities = user.getPermissions().stream()
+                .map(permission -> permission.getUrl() + "_" + permission.getPermission().name())
+                .collect(Collectors.toList());
+
         return Jwts.builder()
                 .setSubject(user.getAccountId())
                 .claim("role", user.getRole().name())
                 .claim("name", user.getName())
+                .claim("authorities", authorities)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
@@ -58,15 +62,15 @@ public class JwtService {
             Jwts.parserBuilder().setSigningKey(getSigningKey()).build().parseClaimsJws(token);
             return true;
         } catch (SignatureException e) {
-            logger.error("Invalid JWT signature: {}", e.getMessage());
+            log.error("Invalid JWT signature: {}", e.getMessage());
         } catch (MalformedJwtException e) {
-            logger.error("Invalid JWT token: {}", e.getMessage());
+            log.error("Invalid JWT token: {}", e.getMessage());
         } catch (ExpiredJwtException e) {
-            logger.error("JWT token is expired: {}", e.getMessage());
+            log.error("JWT token is expired: {}", e.getMessage());
         } catch (UnsupportedJwtException e) {
-            logger.error("JWT token is unsupported: {}", e.getMessage());
+            log.error("JWT token is unsupported: {}", e.getMessage());
         } catch (IllegalArgumentException e) {
-            logger.error("JWT claims string is empty: {}", e.getMessage());
+            log.error("JWT claims string is empty: {}", e.getMessage());
         }
         return false;
     }
@@ -79,7 +83,7 @@ public class JwtService {
                     .parseClaimsJws(token)
                     .getBody();
         } catch (ExpiredJwtException e) {
-            logger.warn("The token is expired and not valid anymore", e);
+            log.warn("The token is expired and not valid anymore", e);
             return null;
         }
     }
@@ -94,9 +98,23 @@ public class JwtService {
         if (userOptional.isPresent()) {
             User user = userOptional.get();
         } else {
-            logger.warn("No user found with role: {}", role);
+            log.warn("No user found with role: {}", role);
         }
 
         return authorities;
+    }
+
+    public List<SimpleGrantedAuthority> getAuthoritiesFromToken(String token) {
+        Claims claims = getClaimsFromToken(token);
+        List<String> authorities = claims.get("authorities", List.class);
+
+        List<SimpleGrantedAuthority> grantedAuthorities = new ArrayList<>();
+        grantedAuthorities.add(new SimpleGrantedAuthority("ROLE_" + claims.get("role", String.class)));
+
+        for (String authority : authorities) {
+            grantedAuthorities.add(new SimpleGrantedAuthority(authority.replace("/", "")));
+        }
+
+        return grantedAuthorities;
     }
 }

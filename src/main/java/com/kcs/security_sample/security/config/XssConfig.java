@@ -1,4 +1,4 @@
-package com.kcs.security_sample.config;
+package com.kcs.security_sample.security.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kcs.security_sample.security.filter.HTMLCharacterEscapes;

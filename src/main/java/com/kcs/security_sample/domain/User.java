@@ -8,16 +8,15 @@ import lombok.NoArgsConstructor;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "user")
 public class User {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", nullable = false, updatable = false, unique = true)
     private Long id;
 
     @Column(name = "account_id", nullable = false, unique = true)
@@ -29,7 +28,16 @@ public class User {
     @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "role", nullable = false)
     @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false)
     private ERole role;
+
+    @OneToMany(mappedBy = "user", fetch = FetchType.EAGER)
+    private Set<UserUrlPermission> userUrlPermissions = new HashSet<>();
+
+    public Set<UrlPermission> getPermissions() {
+        return userUrlPermissions.stream()
+                .map(UserUrlPermission::getUrlPermission)
+                .collect(Collectors.toSet());
+    }
 }
