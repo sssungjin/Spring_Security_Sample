@@ -1,6 +1,7 @@
 package com.kcs.security_sample.security.filter;
 
 import com.kcs.security_sample.security.details.CustomUserDetails;
+import com.kcs.security_sample.security.service.CustomUserDetailService;
 import com.kcs.security_sample.security.service.JwtService;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
@@ -28,8 +29,11 @@ import java.util.List;
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+    private final CustomUserDetailService customUserDetailService;
 
     private final JwtService jwtService;
+
+    UsernamePasswordAuthenticationToken authentication = null;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -46,13 +50,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 log.info("JWT claims - accountId: {}, role: {}", accountId, role);
 
-                List<SimpleGrantedAuthority> authorities = jwtService.getAuthoritiesFromToken(token);
-                log.info("User authorities: {}", authorities);
+                CustomUserDetails userDetails = (CustomUserDetails) customUserDetailService.loadUserByUsername(accountId);
 
-                CustomUserDetails userDetails = new CustomUserDetails(accountId, "", authorities);
-
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, authorities);
+                authentication = new UsernamePasswordAuthenticationToken(
+                        userDetails, null, List.of(new SimpleGrantedAuthority("ROLE_" + role)));
 
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
@@ -64,8 +65,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             log.error("Unable to set user authentication: {}", e.getMessage());
         }
 
+        log.info("Before filter chain - SecurityContext: {}", SecurityContextHolder.getContext().getAuthentication());
         filterChain.doFilter(request, response);
-        log.info("JwtAuthenticationFilter completed processing request to '{}'", request.getRequestURI());
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        log.info("After filter chain - SecurityContext: {}", SecurityContextHolder.getContext().getAuthentication());
     }
 
 

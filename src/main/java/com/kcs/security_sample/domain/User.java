@@ -1,6 +1,5 @@
 package com.kcs.security_sample.domain;
 
-import com.kcs.security_sample.dto.type.ERole;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -28,16 +27,11 @@ public class User {
     @Column(name = "name", nullable = false)
     private String name;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "role", nullable = false)
-    private ERole role;
-
-    @OneToMany(mappedBy = "user", fetch = FetchType.EAGER)
-    private Set<UserUrlPermission> userUrlPermissions = new HashSet<>();
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "role_id", nullable = false)
+    private Role role;
 
     public Set<UrlPermission> getPermissions() {
-        return userUrlPermissions.stream()
-                .map(UserUrlPermission::getUrlPermission)
-                .collect(Collectors.toSet());
+        return role.getPermissions();
     }
 }

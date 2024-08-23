@@ -48,7 +48,7 @@ public class JwtService {
 
         return Jwts.builder()
                 .setSubject(user.getAccountId())
-                .claim("role", user.getRole().name())
+                .claim("role", user.getRole().getName())
                 .claim("name", user.getName())
                 .claim("authorities", authorities)
                 .setIssuedAt(new Date())
@@ -107,14 +107,8 @@ public class JwtService {
     public List<SimpleGrantedAuthority> getAuthoritiesFromToken(String token) {
         Claims claims = getClaimsFromToken(token);
         List<String> authorities = claims.get("authorities", List.class);
-
-        List<SimpleGrantedAuthority> grantedAuthorities = new ArrayList<>();
-        grantedAuthorities.add(new SimpleGrantedAuthority("ROLE_" + claims.get("role", String.class)));
-
-        for (String authority : authorities) {
-            grantedAuthorities.add(new SimpleGrantedAuthority(authority.replace("/", "")));
-        }
-
-        return grantedAuthorities;
+        return authorities.stream()
+                .map(SimpleGrantedAuthority::new)
+                .collect(Collectors.toList());
     }
 }

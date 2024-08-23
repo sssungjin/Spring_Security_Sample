@@ -14,6 +14,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -25,37 +26,11 @@ public class CustomUserDetailService implements UserDetailsService {
     private final UserRepository userRepository;
 
     @Override
+    @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String accountId) throws UsernameNotFoundException {
         User user = userRepository.findByAccountId(accountId)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + accountId));
 
-        return new CustomUserDetails(user.getAccountId(), user.getPassword(), getAuthorities(user));
-    }
-
-    private Set<GrantedAuthority> getAuthorities(User user) {
-        Set<GrantedAuthority> authorities = new HashSet<>();
-
-        // Add role-based authority
-        authorities.add(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
-
-        // Add URL permissions
-        for (UrlPermission permission : user.getPermissions()) {
-            String authority = permission.getUrl() + "_" + permission.getPermission().name();
-            authorities.add(new SimpleGrantedAuthority(authority));
-        }
-
-        return authorities;
-    }
-
-    public boolean hasPermission(String requiredPermission) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        log.info("Checking permission {} for user {}", requiredPermission, authentication);
-        if (authentication == null) {
-            return false;
-        }
-
-        return authentication.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .anyMatch(auth -> auth.equals(requiredPermission));
+        return new CustomUserDetails(user.getAccountId(), user.getPassword(), String.valueOf(user.getRole().getName()));
     }
 }

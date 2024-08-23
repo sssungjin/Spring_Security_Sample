@@ -7,10 +7,7 @@ import com.kcs.security_sample.exception.ErrorCode;
 import com.kcs.security_sample.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -20,12 +17,13 @@ public class LoginController {
     private final UserService userService;
 
     @PostMapping("/login")
-    public ResponseDto<?> login(@RequestBody LoginRequestDto loginRequest) {
-        log.info("Login attempt for account: {}", loginRequest.accountId());
+    public ResponseDto<?> login(@RequestAttribute("account_id") String accountId,
+                                @RequestAttribute("password") String password) {
+        log.info("Login attempt for account: {}", accountId);
         try {
-            return userService.login(loginRequest.accountId(), loginRequest.password());
+            return userService.login(accountId, password);
         } catch (Exception e) {
-            log.error("Login error for account: {}", loginRequest.accountId(), e);
+            log.error("Login error for account: {}", accountId, e);
             return ResponseDto.fail(new CommonException(ErrorCode.INTERNAL_SERVER_ERROR));
         }
     }

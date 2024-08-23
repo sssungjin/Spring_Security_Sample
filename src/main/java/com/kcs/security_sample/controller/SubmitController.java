@@ -28,10 +28,10 @@ public class SubmitController {
     private final CustomUserDetailService customUserDetailService;
 
     @PostMapping("/submit/danger")
-    public ResponseDto<?> dangerSubmit(@RequestBody SubmitRequestDto submitRequest) {
-        log.info("Danger submit attempt with input: {}", submitRequest.inputText());
+    public ResponseDto<?> dangerSubmit(@RequestAttribute("input_text") String inputText) {
+        log.info("Danger submit attempt with input: {}", inputText);
         try {
-            SubmitResponseDto response = submitService.processDangerSubmit(submitRequest);
+            SubmitResponseDto response = submitService.processDangerSubmit(inputText);
             return ResponseDto.ok(response);
         } catch (Exception e) {
             log.error("Error processing danger submit", e);
@@ -53,9 +53,13 @@ public class SubmitController {
 
 
 
-    @PostMapping("/submit/create")
-    @PreAuthorize("hasAuthority('apiv1submitcreate_CREATE')")
+    @GetMapping("/submit/create")
     public ResponseDto<?> createSettlement(Authentication authentication) {
+        log.info("createSubmission endpoint accessed");
+        log.info("Authentication in controller: {}", authentication);
+        if (authentication != null) {
+            log.debug("User: {}, Authorities: {}", authentication.getName(), authentication.getAuthorities());
+        }
         try {
             return ResponseDto.ok("Settlement created successfully");
         } catch (Exception e) {
@@ -65,7 +69,7 @@ public class SubmitController {
     }
 
     @DeleteMapping("/submit/delete")
-    @PreAuthorize("hasAuthority('apiv1submitcreate_DELETE')")
+    //@PreAuthorize("hasRole('MANAGER')")
     public ResponseDto<?> deleteSettlement(Authentication authentication) {
         try {
             return ResponseDto.ok("Settlement deleted successfully");

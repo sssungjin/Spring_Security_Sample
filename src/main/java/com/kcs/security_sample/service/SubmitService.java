@@ -17,8 +17,8 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 @Slf4j
 public class SubmitService {
-    public SubmitResponseDto processDangerSubmit(SubmitRequestDto submitRequest) {
-        return new SubmitResponseDto(submitRequest.inputText());
+    public SubmitResponseDto processDangerSubmit(String inputText) {
+        return new SubmitResponseDto(inputText);
     }
 
     public SubmitResponseDto processFormDataSubmit(FormDataSubmitRequestDto formDataSubmitDto) {
