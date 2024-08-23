@@ -1,5 +1,6 @@
 package com.kcs.security_sample.security.config;
 
+import com.kcs.security_sample.security.filter.JsonFilter;
 import com.kcs.security_sample.security.filter.JwtAuthenticationFilter;
 import com.kcs.security_sample.security.filter.MultipartFilter;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final MultipartFilter multipartFilter;
+    private final JsonFilter jsonFilter;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -43,14 +45,21 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
-                                .requestMatchers("/login", "/api/v1/login", "/api/v1/submit/danger", "/api/v1/upload/file", "/api/v1/submit/create", "/api/v1/submit/delete", "/api/v1/upload/jsonfile").permitAll()
+                                .requestMatchers(
+                                        "/login", "/api/v1/login", "/api/v1/submit/danger",
+                                        "/api/v1/upload/file", "/api/v1/submit/create", "/api/v1/submit/formdata",
+                                        "/api/v1/submit/delete", "/api/v1/jsonfile/upload", "/api/v1/multipart/upload")
+                                .permitAll()
                                 .requestMatchers("/admin").hasRole("ADMIN")
                                 .requestMatchers("/user").hasAnyRole("ADMIN", "USER", "MANAGER")
                                 .requestMatchers("/settlement").hasAnyRole("MANAGER", "ADMIN")
                                 .anyRequest().authenticated()
                 )
-                .addFilterBefore(multipartFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(jwtAuthenticationFilter, MultipartFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(jsonFilter, JwtAuthenticationFilter.class)
+                .addFilterAfter(multipartFilter, JsonFilter.class);
+//                .addFilterAfter(jsonFilter, JwtAuthenticationFilter.class)
+              //  .addFilterAfter(multipartFilter, JsonFilter.class);
 
         return http.build();
     }

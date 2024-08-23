@@ -4,33 +4,27 @@ import com.kcs.security_sample.dto.common.ResponseDto;
 import com.kcs.security_sample.dto.response.FileUploadResponseDto;
 import com.kcs.security_sample.exception.CommonException;
 import com.kcs.security_sample.exception.ErrorCode;
+import com.kcs.security_sample.service.SubmitService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1")
+@Slf4j
 public class FileController {
-    @PostMapping("/upload/file")
+    private final SubmitService submitService;
+    @PostMapping("/multipart/upload")
     public ResponseDto<?> uploadFile(HttpServletRequest request) {
-        FileUploadResponseDto result = (FileUploadResponseDto) request.getAttribute("fileUploadResult");
-        if (result != null) {
-            return ResponseDto.ok(result);
-        } else {
-            return ResponseDto.fail(new CommonException(ErrorCode.INTERNAL_SERVER_ERROR));
-        }
+        return submitService.processFileUpload(request);
     }
 
-    @PostMapping("/upload/jsonfile")
+    @PostMapping("/jsonfile/upload")
     public ResponseDto<?> uploadJsonFile(HttpServletRequest request) {
-        FileUploadResponseDto result = (FileUploadResponseDto) request.getAttribute("fileUploadResult");
-        if (result != null) {
-            return ResponseDto.ok(result);
-        } else {
-            return ResponseDto.fail(new CommonException(ErrorCode.INTERNAL_SERVER_ERROR));
-        }
+        return submitService.processFileUpload(request);
     }
 }

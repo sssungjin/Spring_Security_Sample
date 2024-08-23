@@ -1,5 +1,6 @@
 package com.kcs.security_sample.controller;
 
+import com.kcs.security_sample.dto.request.FormDataSubmitRequestDto;
 import com.kcs.security_sample.dto.request.SubmitRequestDto;
 import com.kcs.security_sample.dto.response.FileUploadResponseDto;
 import com.kcs.security_sample.dto.response.SubmitResponseDto;
@@ -38,32 +39,41 @@ public class SubmitController {
         }
     }
 
+    @PostMapping("/submit/formdata")
+    public ResponseDto<?> formDataSubmit(@ModelAttribute FormDataSubmitRequestDto formDataSubmitDto, Authentication authentication) {
+        log.info("Form data submit attempt with input: {}", formDataSubmitDto.text());
+        try {
+            SubmitResponseDto response = submitService.processFormDataSubmit(formDataSubmitDto);
+            return ResponseDto.ok(response);
+        } catch (Exception e) {
+            log.error("Error processing form data submit", e);
+            return ResponseDto.fail(new CommonException(ErrorCode.INTERNAL_SERVER_ERROR));
+        }
+    }
+
 
 
     @PostMapping("/submit/create")
     @PreAuthorize("hasAuthority('apiv1submitcreate_CREATE')")
     public ResponseDto<?> createSettlement(Authentication authentication) {
-
-//        if (!customUserDetailService.hasPermission("apiv1submitcreate_CREATE")) {
-//            return ResponseDto.fail(new CommonException(ErrorCode.UNAUTHORIZED));
-//        }
-        return ResponseDto.ok("Settlement created successfully");
+        try {
+            return ResponseDto.ok("Settlement created successfully");
+        } catch (Exception e) {
+            log.error("Error creating settlement", e);
+            return ResponseDto.fail(new CommonException(ErrorCode.INTERNAL_SERVER_ERROR));
+        }
     }
 
     @DeleteMapping("/submit/delete")
+    @PreAuthorize("hasAuthority('apiv1submitcreate_DELETE')")
     public ResponseDto<?> deleteSettlement(Authentication authentication) {
-        log.info("Entered deleteSettlement method");
-
-        // 권한 검사
-        if (!customUserDetailService.hasPermission("apiv1submitcreate_DELETE")) {
-            log.warn("User {} does not have 'settlement_DELETE' authority", authentication.getName());
-            return ResponseDto.fail(new CommonException(ErrorCode.UNAUTHORIZED));
+        try {
+            return ResponseDto.ok("Settlement deleted successfully");
+        } catch (Exception e) {
+            log.error("Error deleting settlement", e);
+            return ResponseDto.fail(new CommonException(ErrorCode.INTERNAL_SERVER_ERROR));
         }
-
-        log.info("Attempting to delete settlement. User: {}, Authorities: {}",
-                authentication.getName(),
-                authentication.getAuthorities());
-
-        return ResponseDto.ok("Settlement deleted successfully");
     }
+
+
 }
