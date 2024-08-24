@@ -1,6 +1,5 @@
 package com.kcs.security_sample.controller;
 
-import com.kcs.security_sample.dto.request.LoginRequestDto;
 import com.kcs.security_sample.dto.common.ResponseDto;
 import com.kcs.security_sample.exception.CommonException;
 import com.kcs.security_sample.exception.ErrorCode;

@@ -2,7 +2,6 @@ package com.kcs.security_sample.service;
 
 import com.kcs.security_sample.dto.common.ResponseDto;
 import com.kcs.security_sample.dto.request.FormDataSubmitRequestDto;
-import com.kcs.security_sample.dto.request.SubmitRequestDto;
 import com.kcs.security_sample.dto.response.FileUploadResponseDto;
 import com.kcs.security_sample.dto.response.SubmitResponseDto;
 import com.kcs.security_sample.exception.CommonException;

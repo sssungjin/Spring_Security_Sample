@@ -1,6 +1,5 @@
 package com.kcs.security_sample.security.details;
 
-import com.kcs.security_sample.domain.User;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;

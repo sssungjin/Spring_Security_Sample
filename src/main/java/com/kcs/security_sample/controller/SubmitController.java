@@ -1,8 +1,6 @@
 package com.kcs.security_sample.controller;
 
 import com.kcs.security_sample.dto.request.FormDataSubmitRequestDto;
-import com.kcs.security_sample.dto.request.SubmitRequestDto;
-import com.kcs.security_sample.dto.response.FileUploadResponseDto;
 import com.kcs.security_sample.dto.response.SubmitResponseDto;
 import com.kcs.security_sample.dto.common.ResponseDto;
 import com.kcs.security_sample.security.service.CustomUserDetailService;
@@ -10,10 +8,8 @@ import com.kcs.security_sample.security.service.FileService;
 import com.kcs.security_sample.service.SubmitService;
 import com.kcs.security_sample.exception.CommonException;
 import com.kcs.security_sample.exception.ErrorCode;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
