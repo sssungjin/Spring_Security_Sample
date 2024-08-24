@@ -9,6 +9,8 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 @Configuration
 public class XssConfig {
 
+    // Prevent XSS attacks, escape HTML characters
+    // Applies to JSON responses
     @Bean
     public MappingJackson2HttpMessageConverter jsonEscapeConverter() {
         ObjectMapper objectMapper = new ObjectMapper();

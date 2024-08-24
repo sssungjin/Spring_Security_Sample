@@ -36,18 +36,19 @@ public class JsonFilter extends OncePerRequestFilter {
 
         String uri = request.getRequestURI();
 
+        // Check if the request is a JSON request
         if ("application/json".equalsIgnoreCase(request.getContentType())) {
             try {
                 String jsonBody = new String(request.getInputStream().readAllBytes());
                 Map<String, Object> jsonMap = objectMapper.readValue(jsonBody, Map.class);
 
+                // Process upload file request, need to add a new endpoint for this
                 if ("/api/v1/jsonfile/upload".equals(uri)) {
-                    FileUploadResponseDto responseDto = processJsonFileUpload(jsonMap);
-                    request.setAttribute("fileUploadResult", responseDto);
+                    FileUploadResponseDto responseDto = processJsonFileUpload(jsonMap);         // If file upload uri, process JSON file upload
+                    request.setAttribute("fileUploadResult", responseDto);                // Set file upload result as request attribute
                 } else {
-                    log.info("Processing other JSON request: {}", uri);
                     for (Map.Entry<String, Object> entry : jsonMap.entrySet()) {
-                        request.setAttribute(entry.getKey(), entry.getValue());
+                        request.setAttribute(entry.getKey(), entry.getValue());                 // Set JSON attributes as request attributes
                     }
                 }
 
@@ -63,18 +64,20 @@ public class JsonFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
+    // Process JSON file upload
     private FileUploadResponseDto processJsonFileUpload(Map<String, Object> jsonMap) throws IOException {
         String fileName = (String) jsonMap.get("file_name");
         String fileType = (String) jsonMap.get("file_type");
         Integer fileSize = (Integer) jsonMap.get("file_size");
         String fileData = (String) jsonMap.get("file_data");
 
+        // Decode base64 file data and create MultipartFile to save at path
         if (fileName != null && fileType != null && fileSize != null && fileData != null) {
             byte[] decodedFile = Base64.getDecoder().decode(fileData);
             MultipartFile multipartFile = new MockMultipartFile(fileName, fileName, fileType, decodedFile);
 
-            FileUploadResponseDto responseDto = fileService.uploadFile(multipartFile);
-            log.info("JSON File upload successful: {}", responseDto);
+            // Upload file and return response
+            FileUploadResponseDto responseDto = fileService.uploadFile(multipartFile);                      // Upload file at Path
             return responseDto;
         } else {
             log.error("Invalid file data received");

@@ -20,12 +20,14 @@ public class UserService {
     private final UserRepository userRepository;
     private final JwtService jwtService;
 
+    // Find user by accountId
     public Optional<User> findByAccountId(String accountId) {
         Optional<User> user = userRepository.findByAccountId(accountId);
         log.info("Found user for accountId: {}, ROLE: {}", accountId, user.isPresent() ? user.get().getRole() : "not found");
         return user;
     }
 
+    // Authenticate user by accountId and password
     public boolean authenticate(String accountId, String password) {
         Optional<User> user = findByAccountId(accountId);
         boolean isAuthenticated = user.isPresent() && password.equals(user.get().getPassword());
@@ -33,6 +35,7 @@ public class UserService {
         return isAuthenticated;
     }
 
+    // Login user by accountId and password
     public ResponseDto<?> login(String accountId, String password) {
         try {
             User user = findByAccountId(accountId)

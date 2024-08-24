@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class CustomUserDetailService implements UserDetailsService {
     private final UserRepository userRepository;
 
+    // Load user by accountId
     @Override
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String accountId) throws UsernameNotFoundException {

@@ -33,31 +33,30 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-
         try {
             String token = extractToken(request);
-            if (token != null && jwtService.validateToken(token)) {
-                Claims claims = jwtService.getClaimsFromToken(token);
-                String accountId = claims.getSubject();
+            Claims claims = jwtService.getClaimsFromToken(token);
+            String accountId = claims.getSubject();
 
-                CustomUserDetails userDetails = (CustomUserDetails) customUserDetailService.loadUserByUsername(accountId);
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities());
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            // Load user details from the database by account Id
+            CustomUserDetails userDetails = (CustomUserDetails) customUserDetailService.loadUserByUsername(accountId);
+            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                    userDetails, null, userDetails.getAuthorities());
+            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                SecurityContext context = SecurityContextHolder.createEmptyContext();
-                context.setAuthentication(authentication);
-                SecurityContextHolder.setContext(context);
-                securityContextRepository.saveContext(context, request, response);
+            // Set the authentication in the SecurityContext
+            SecurityContext context = SecurityContextHolder.createEmptyContext();
+            context.setAuthentication(authentication);
+            SecurityContextHolder.setContext(context);
+            securityContextRepository.saveContext(context, request, response);      // Save the SecurityContext using the SecurityContextRepository
 
-            } else {
-                log.info("No valid JWT token found, continuing without authentication");
-            }
         } catch (Exception e) {
+            // If an exception occurs, clear the SecurityContext
             log.error("Unable to set user authentication: {}", e.getMessage());
             SecurityContextHolder.clearContext();
         }
 
+        // Continue the filter chain
         filterChain.doFilter(request, response);
     }
 

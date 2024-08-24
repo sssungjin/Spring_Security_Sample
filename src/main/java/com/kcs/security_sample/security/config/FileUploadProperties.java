@@ -12,6 +12,7 @@ import java.util.List;
 @Getter
 @Setter
 public class FileUploadProperties {
+    // file upload properties
     private String path;
     private List<String> allowedExtensions;
 }

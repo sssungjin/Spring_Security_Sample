@@ -17,11 +17,13 @@ import java.util.List;
 public class PermissionService {
     private final RoleRepository roleRepository;
 
+    // Get all permissions from DB
     @Transactional(readOnly = true)
     public List<PermissionDto> getAllPermissions() {
         List<Role> roles = roleRepository.findAll();
         List<PermissionDto> permissions = new ArrayList<>();
 
+        // Get all permissions from each role
         for (Role role : roles) {
             for (RoleUrlPermission roleUrlPermission : role.getRoleUrlPermissions()) {
                 UrlPermission urlPermission = roleUrlPermission.getUrlPermission();
@@ -32,7 +34,6 @@ public class PermissionService {
                 ));
             }
         }
-
         return permissions;
     }
 }

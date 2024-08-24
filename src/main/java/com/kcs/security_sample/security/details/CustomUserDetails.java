@@ -9,6 +9,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.Collections;
 
+// CustomUserDetails class that implements UserDetails interface
 @Getter
 @RequiredArgsConstructor
 public class CustomUserDetails implements UserDetails {
@@ -16,6 +17,7 @@ public class CustomUserDetails implements UserDetails {
     private final String password;
     private final Collection<? extends GrantedAuthority> authorities;
 
+    // Authorities are set to ROLE_{role}, ex) ROLE_USER
     public CustomUserDetails(String accountId, String password, String role) {
         this.accountId = accountId;
         this.password = password;

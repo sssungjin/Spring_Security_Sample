@@ -23,7 +23,6 @@ public class SubmitService {
     public SubmitResponseDto processFormDataSubmit(FormDataSubmitRequestDto formDataSubmitDto) {
         return new SubmitResponseDto(formDataSubmitDto.text());
     }
-
     public ResponseDto<?> processFileUpload(HttpServletRequest request) {
         FileUploadResponseDto result = (FileUploadResponseDto) request.getAttribute("fileUploadResult");
         log.info("Processing file upload request. Result: {}", result);

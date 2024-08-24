@@ -22,10 +22,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Slf4j
 public class FileService {
-
-
     private final FileInfoRepository fileInfoRepository;
-
     private final FileUploadProperties fileUploadProperties;
 
 
@@ -38,6 +35,7 @@ public class FileService {
             throw new CommonException(ErrorCode.FILE_EXTENSION_NOT_ALLOWED);
         }
 
+        // Generate unique filename
         String renamedFilename = generateUniqueFilename(originalFilename);
         Path filePath = Paths.get(fileUploadProperties.getPath(), renamedFilename);
 
@@ -73,6 +71,7 @@ public class FileService {
         return fileUploadProperties.getAllowedExtensions().contains(extension);
     }
 
+    // Generate unique filename using UUID
     private String generateUniqueFilename(String originalFilename) {
         String extension = getFileExtension(originalFilename);
         return UUID.randomUUID().toString() + extension;
@@ -86,22 +85,5 @@ public class FileService {
         if (!file.setWritable(true, true)) {
             throw new CommonException(ErrorCode.FILE_PERMISSION_SETTING_FAILED);
         }
-//        if (!file.setExecutable(false, false)) {
-//            throw new IOException("Failed to set file non-executable");
-//        }
     }
-
-//    private void setFilePermissions(Path filePath) throws IOException {
-//        try {
-//            Set<PosixFilePermission> permissions = PosixFilePermissions.fromString("rw-r--r--");
-//            Files.setPosixFilePermissions(filePath, permissions);
-//        } catch (UnsupportedOperationException e) {
-//            // Fallback for non-POSIX systems
-//            File file = filePath.toFile();
-//            if (!file.setReadable(true, false) || !file.setWritable(true, true) || !file.setExecutable(false, false)) {
-//                throw new IOException("Failed to set file permissions");
-//            }
-//        }
-//        log.info("File permissions set successfully for: {}", filePath);
-//    }
 }

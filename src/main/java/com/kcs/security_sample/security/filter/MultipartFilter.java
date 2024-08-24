@@ -29,7 +29,7 @@ import java.util.Map;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-@Order(2)
+@Order(2) // After Excute JSONFilter, which is Order(1)
 public class MultipartFilter extends OncePerRequestFilter {
 
     private final MultipartResolver multipartResolver;
@@ -41,18 +41,18 @@ public class MultipartFilter extends OncePerRequestFilter {
 
         String uri = request.getRequestURI();
 
+        //  Check if the request is a multipart request
         if (multipartResolver.isMultipart(request) && !(request instanceof ContentCachingRequestWrapper)) {
             MultipartHttpServletRequest multipartRequest = multipartResolver.resolveMultipart(request);
             try {
-                processMultipartRequest(multipartRequest);
-                filterChain.doFilter(multipartRequest, response);
+                processMultipartRequest(multipartRequest);                                      //  Process the multipart request
+                filterChain.doFilter(multipartRequest, response);                               // Continue the filter chain with the multipart request
             } catch (Exception e) {
                 log.error("Error in MultipartFilter", e);
                 throw new ServletException(e);
             }
         } else {
-            log.info("Skipping multipart processing for request: {}", uri);
-            filterChain.doFilter(request, response);
+            filterChain.doFilter(request, response);                                            // Continue the filter chain with the not multipart request
         }
     }
 
@@ -67,68 +67,18 @@ public class MultipartFilter extends OncePerRequestFilter {
             multipartRequest.setAttribute(entry.getKey(), sanitizedValues);
         }
 
+        // Process file upload
         MultipartFile file = multipartRequest.getFile("file");
         if (file != null) {
-            log.info("Processing file upload: {}", file.getOriginalFilename());
             try {
-                FileUploadResponseDto responseDto = fileService.uploadFile(file);
-                multipartRequest.setAttribute("fileUploadResult", responseDto);
-                log.info("File upload successful: {}", responseDto);
+                FileUploadResponseDto responseDto = fileService.uploadFile(file);                // Upload the file
+                multipartRequest.setAttribute("fileUploadResult", responseDto);           // Set the file upload result as a request attribute
             } catch (Exception e) {
                 log.error("Error during file upload: {}", e.getMessage(), e);
                 throw new CommonException(ErrorCode.FILE_UPLOAD_FAILED);
             }
         } else {
             log.warn("No file found in the multipart request");
-        }
-    }
-
-    private static class XssRequestWrapper extends HttpServletRequestWrapper {
-
-        private Map<String, String[]> sanitizedParameterMap;
-
-        public XssRequestWrapper(HttpServletRequest request) {
-            super(request);
-            this.sanitizedParameterMap = sanitizeParameterMap(request.getParameterMap());
-        }
-
-        @Override
-        public String getParameter(String name) {
-            String[] values = getParameterValues(name);
-            if (values != null && values.length > 0) {
-                return values[0];
-            }
-            return null;
-        }
-
-        @Override
-        public String[] getParameterValues(String name) {
-            return sanitizedParameterMap.get(name);
-        }
-
-        @Override
-        public Enumeration<String> getParameterNames() {
-            return Collections.enumeration(sanitizedParameterMap.keySet());
-        }
-
-        @Override
-        public Map<String, String[]> getParameterMap() {
-            return sanitizedParameterMap;
-        }
-
-        private Map<String, String[]> sanitizeParameterMap(Map<String, String[]> parameterMap) {
-            Map<String, String[]> sanitizedMap = new HashMap<>();
-
-            for (Map.Entry<String, String[]> entry : parameterMap.entrySet()) {
-                String[] rawValues = entry.getValue();
-                String[] sanitizedValues = new String[rawValues.length];
-                for (int i = 0; i < rawValues.length; i++) {
-                    sanitizedValues[i] = StringEscapeUtils.escapeHtml4(rawValues[i]);
-                }
-                sanitizedMap.put(entry.getKey(), sanitizedValues);
-            }
-
-            return sanitizedMap;
         }
     }
 }

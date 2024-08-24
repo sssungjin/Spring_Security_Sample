@@ -39,6 +39,7 @@ public class SecurityConfig {
         return new JwtAuthenticationFilter(customUserDetailService, jwtService, securityContextRepository());
     }
 
+    // Password encoder for testing purposes (not bcrypt)
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new PasswordEncoder() {
@@ -54,16 +55,11 @@ public class SecurityConfig {
         };
     }
 
+    // Security filter chain
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        // Get all permissions from DB
         List<PermissionDto> permissions = permissionService.getAllPermissions();
-        log.info("Permissions: {}", permissions);
-
-        log.info("SecurityContextHolder {}", SecurityContextHolder.getContext().getAuthentication());
-
-        permissions.forEach(permission ->
-                log.info("Permission: {}, url: {}\n, role: {}, role.name: {}", permission, permission.url(), permission.role(), permission.role().name())
-        );
 
         Map<String, Set<String>> urlRoles = new HashMap<>();
         permissions.forEach(permission -> {
@@ -75,26 +71,29 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorizeRequests -> {
                     authorizeRequests
+                            // Permit all requests to login, submit, file upload
                             .requestMatchers(
                                     "/login", "/api/v1/login",
                                     "/api/v1/submit/danger", "/api/v1/submit/formdata",
                                     "/api/v1/jsonfile/upload", "/api/v1/multipart/upload")
                             .permitAll();
-
+                    // Set up permissions for each URL, ROLE from DB
                     urlRoles.forEach((url, roles) -> {
                         authorizeRequests.requestMatchers(url)
                                 .hasAnyRole(roles.toArray(new String[0]));
                     });
                     authorizeRequests.anyRequest().authenticated();
                 })
-                .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
-                .addFilterAfter(jsonFilter, JwtAuthenticationFilter.class)
-                .addFilterAfter(multipartFilter, JsonFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class) // Add JWT filter before UsernamePasswordAuthenticationFilter
+                .addFilterAfter(jsonFilter, JwtAuthenticationFilter.class)                              // Add JSON filter after JWT filter
+                .addFilterAfter(multipartFilter, JsonFilter.class);                                     // Add Multipart filter after JSON filter
 
         return http.build();
     }
 
 
+    // Security context repository, purpose for saving security context
+    // SpringContextPersistenceFilter deprecated in Spring 6.3.x
     @Bean
     public SecurityContextRepository securityContextRepository() {
         return new DelegatingSecurityContextRepository(

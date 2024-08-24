@@ -34,18 +34,19 @@ public class JwtService {
     @Value("${jwt.expiration-time}")
     private long expirationTime;
 
+    // Get the signing key by using the secret key
     private SecretKey getSigningKey() {
         byte[] keyBytes = secretKey.getBytes(StandardCharsets.UTF_8);
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
+    // Parse the token and get the user's accountId
     public String generateToken(User user) {
-        log.info("Generating token for user: {}, role: {}", user.getAccountId(), user.getRole());
-
         List<String> authorities = user.getPermissions().stream()
                 .map(permission -> permission.getUrl() + "_" + permission.getPermission().name())
                 .collect(Collectors.toList());
 
+        // Generate the token which contains the user's accountId, role, name, authorities, issuedAt, expiration, and signing key
         return Jwts.builder()
                 .setSubject(user.getAccountId())
                 .claim("role", user.getRole().getName())
@@ -57,24 +58,7 @@ public class JwtService {
                 .compact();
     }
 
-    public boolean validateToken(String token) {
-        try {
-            Jwts.parserBuilder().setSigningKey(getSigningKey()).build().parseClaimsJws(token);
-            return true;
-        } catch (SignatureException e) {
-            log.error("Invalid JWT signature: {}", e.getMessage());
-        } catch (MalformedJwtException e) {
-            log.error("Invalid JWT token: {}", e.getMessage());
-        } catch (ExpiredJwtException e) {
-            log.error("JWT token is expired: {}", e.getMessage());
-        } catch (UnsupportedJwtException e) {
-            log.error("JWT token is unsupported: {}", e.getMessage());
-        } catch (IllegalArgumentException e) {
-            log.error("JWT claims string is empty: {}", e.getMessage());
-        }
-        return false;
-    }
-
+    // Parse the token and get the user's accountId
     public Claims getClaimsFromToken(String token) {
         try {
             return Jwts.parserBuilder()
@@ -86,29 +70,5 @@ public class JwtService {
             log.warn("The token is expired and not valid anymore", e);
             return null;
         }
-    }
-
-    public List<SimpleGrantedAuthority> getAuthoritiesFromRole(String role) {
-        ERole eRole = ERoleFactory.of(role);
-
-        List<SimpleGrantedAuthority> authorities = new ArrayList<>();
-        authorities.add(new SimpleGrantedAuthority("ROLE_" + eRole.name()));
-
-        Optional<User> userOptional = userRepository.findByRole(eRole);
-        if (userOptional.isPresent()) {
-            User user = userOptional.get();
-        } else {
-            log.warn("No user found with role: {}", role);
-        }
-
-        return authorities;
-    }
-
-    public List<SimpleGrantedAuthority> getAuthoritiesFromToken(String token) {
-        Claims claims = getClaimsFromToken(token);
-        List<String> authorities = claims.get("authorities", List.class);
-        return authorities.stream()
-                .map(SimpleGrantedAuthority::new)
-                .collect(Collectors.toList());
     }
 }
