@@ -76,13 +76,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorizeRequests -> {
                     authorizeRequests
                             .requestMatchers(
-                                    "/login", "/api/v1/login", "/api/v1/submit/danger",
-                                    "/api/v1/upload/file", "/api/v1/submit/formdata",
+                                    "/login", "/api/v1/login",
+                                    "/api/v1/submit/danger", "/api/v1/submit/formdata",
                                     "/api/v1/jsonfile/upload", "/api/v1/multipart/upload")
-                            .permitAll()
-                            .requestMatchers("/user").hasAnyRole("ADMIN", "USER", "MANAGER")
-                            .requestMatchers("/settlement").hasAnyRole("MANAGER", "ADMIN")
-                            .requestMatchers("/admin").hasRole("ADMIN");
+                            .permitAll();
 
                     urlRoles.forEach((url, roles) -> {
                         authorizeRequests.requestMatchers(url)

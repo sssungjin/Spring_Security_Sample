@@ -33,7 +33,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        log.info("JwtAuthenticationFilter processing request to '{}'", request.getRequestURI());
 
         try {
             String token = extractToken(request);
@@ -51,8 +50,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 SecurityContextHolder.setContext(context);
                 securityContextRepository.saveContext(context, request, response);
 
-                log.info("Authenticated user: {}, role: {}, setting security context", accountId, userDetails.getAuthorities());
-                log.info("SecurityContextHolder {}", SecurityContextHolder.getContext().getAuthentication());
             } else {
                 log.info("No valid JWT token found, continuing without authentication");
             }

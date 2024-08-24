@@ -47,15 +47,8 @@ public class SubmitController {
         }
     }
 
-
-
     @GetMapping("/submit/create")
     public ResponseDto<?> createSettlement(Authentication authentication) {
-        log.info("createSubmission endpoint accessed");
-        log.info("Authentication in controller: {}", authentication);
-        if (authentication != null) {
-            log.debug("User: {}, Authorities: {}", authentication.getName(), authentication.getAuthorities());
-        }
         try {
             return ResponseDto.ok("Settlement created successfully");
         } catch (Exception e) {
@@ -65,7 +58,6 @@ public class SubmitController {
     }
 
     @DeleteMapping("/submit/delete")
-    //@PreAuthorize("hasRole('MANAGER')")
     public ResponseDto<?> deleteSettlement(Authentication authentication) {
         try {
             return ResponseDto.ok("Settlement deleted successfully");
@@ -74,6 +66,4 @@ public class SubmitController {
             return ResponseDto.fail(new CommonException(ErrorCode.INTERNAL_SERVER_ERROR));
         }
     }
-
-
 }
