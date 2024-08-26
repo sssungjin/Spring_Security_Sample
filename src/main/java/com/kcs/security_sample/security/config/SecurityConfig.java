@@ -84,9 +84,9 @@ public class SecurityConfig {
                     });
                     authorizeRequests.anyRequest().authenticated();
                 })
-                .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class); // Add JWT filter before UsernamePasswordAuthenticationFilter
-                //.addFilterAfter(jsonFilter, JwtAuthenticationFilter.class)                              // Add JSON filter after JWT filter
-                //.addFilterAfter(multipartFilter, JwtAuthenticationFilter.class);                                     // Add Multipart filter after JSON filter
+                .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class) // Add JWT filter before UsernamePasswordAuthenticationFilter
+                .addFilterAfter(jsonFilter, JwtAuthenticationFilter.class)                              // Add JSON filter after JWT filter
+                .addFilterAfter(multipartFilter, JsonFilter.class);                                     // Add Multipart filter after JSON filter
 
         return http.build();
     }
