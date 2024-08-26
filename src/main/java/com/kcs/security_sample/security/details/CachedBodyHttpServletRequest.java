@@ -9,6 +9,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+
+// Caching JsonFilter request body
 public class CachedBodyHttpServletRequest extends HttpServletRequestWrapper {
 
     private byte[] cachedBody;
