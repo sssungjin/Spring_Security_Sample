@@ -35,17 +35,20 @@ public class JsonFilter extends OncePerRequestFilter {
     private final ObjectMapper objectMapper;
     private final FileService fileService;
 
+
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-            throws ServletException, IOException {
-
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String uri = request.getRequestURI();
-
         if ("application/json".equalsIgnoreCase(request.getContentType())) {
             CachedBodyHttpServletRequest cachedBodyHttpServletRequest = new CachedBodyHttpServletRequest(request);
-
             String jsonBody = new String(cachedBodyHttpServletRequest.getInputStream().readAllBytes());
+
+            // Apply XSS escaping to the JSON body
             Map<String, Object> jsonMap = objectMapper.readValue(jsonBody, Map.class);
+            String escapedJsonBody = objectMapper.writeValueAsString(jsonMap);
+
+            // Create a new CachedBodyHttpServletRequest with the escaped JSON body
+            cachedBodyHttpServletRequest = new CachedBodyHttpServletRequest(request, escapedJsonBody.getBytes());
 
             if ("/api/v1/submit/total".equals(uri)) {
                 processJsonFileUpload(jsonMap, request);
@@ -58,7 +61,7 @@ public class JsonFilter extends OncePerRequestFilter {
                 request.setAttribute(entry.getKey(), entry.getValue());
             }
 
-            // 캐싱된 요청을 다음 필터로 전달
+            // Pass the cached request with escaped body to the next filter
             filterChain.doFilter(cachedBodyHttpServletRequest, response);
         } else {
             filterChain.doFilter(request, response);

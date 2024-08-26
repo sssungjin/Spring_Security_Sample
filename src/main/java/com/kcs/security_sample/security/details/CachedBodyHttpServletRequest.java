@@ -9,28 +9,24 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-
-// Caching JsonFilter request body
 public class CachedBodyHttpServletRequest extends HttpServletRequestWrapper {
 
     private byte[] cachedBody;
 
     public CachedBodyHttpServletRequest(HttpServletRequest request) throws IOException {
         super(request);
-
         InputStream requestInputStream = request.getInputStream();
-        synchronized (this) {
-            this.cachedBody = toByteArray(requestInputStream);
-        }
+        this.cachedBody = toByteArray(requestInputStream);
+    }
+
+    public CachedBodyHttpServletRequest(HttpServletRequest request, byte[] cachedBody) {
+        super(request);
+        this.cachedBody = cachedBody;
     }
 
     @Override
     public ServletInputStream getInputStream() throws IOException {
-        CachedBodyServletInputStream cachedBodyServletInputStream = null;
-        synchronized (this) {
-            cachedBodyServletInputStream = new CachedBodyServletInputStream(this.cachedBody);
-            return new CachedBodyServletInputStream(this.cachedBody);
-        }
+        return new CachedBodyServletInputStream(this.cachedBody);
     }
 
     private byte[] toByteArray(InputStream input) throws IOException {
@@ -52,12 +48,12 @@ public class CachedBodyHttpServletRequest extends HttpServletRequestWrapper {
         }
 
         @Override
-        public int read() throws IOException {
+        public synchronized int read() throws IOException {
             return buffer.read();
         }
 
         @Override
-        public boolean isFinished() {
+        public synchronized boolean isFinished() {
             return buffer.available() == 0;
         }
 
@@ -68,7 +64,7 @@ public class CachedBodyHttpServletRequest extends HttpServletRequestWrapper {
 
         @Override
         public void setReadListener(ReadListener listener) {
-            // Not implemented
+            // 구현하지 않음
         }
     }
 }
