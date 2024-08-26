@@ -17,13 +17,20 @@ public class CachedBodyHttpServletRequest extends HttpServletRequestWrapper {
 
     public CachedBodyHttpServletRequest(HttpServletRequest request) throws IOException {
         super(request);
+
         InputStream requestInputStream = request.getInputStream();
-        this.cachedBody = toByteArray(requestInputStream);
+        synchronized (this) {
+            this.cachedBody = toByteArray(requestInputStream);
+        }
     }
 
     @Override
     public ServletInputStream getInputStream() throws IOException {
-        return new CachedBodyServletInputStream(this.cachedBody);
+        CachedBodyServletInputStream cachedBodyServletInputStream = null;
+        synchronized (this) {
+            cachedBodyServletInputStream = new CachedBodyServletInputStream(this.cachedBody);
+            return new CachedBodyServletInputStream(this.cachedBody);
+        }
     }
 
     private byte[] toByteArray(InputStream input) throws IOException {
