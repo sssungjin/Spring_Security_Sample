@@ -3,11 +3,10 @@ package com.kcs.security_sample.security.filter;
 import com.kcs.security_sample.dto.response.FileUploadResponseDto;
 import com.kcs.security_sample.exception.CommonException;
 import com.kcs.security_sample.exception.ErrorCode;
-import com.kcs.security_sample.security.service.FileService;
+import com.kcs.security_sample.service.FileService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletRequestWrapper;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,9 +20,6 @@ import org.springframework.web.multipart.MultipartResolver;
 import org.springframework.web.util.ContentCachingRequestWrapper;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.Map;
 
 @Component

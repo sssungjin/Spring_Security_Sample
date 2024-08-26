@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kcs.security_sample.dto.response.FileUploadResponseDto;
 import com.kcs.security_sample.exception.CommonException;
 import com.kcs.security_sample.exception.ErrorCode;
-import com.kcs.security_sample.security.service.FileService;
+import com.kcs.security_sample.service.FileService;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -17,6 +17,8 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.mock.web.MockMultipartFile;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Base64;
 
@@ -29,29 +31,27 @@ public class JsonFilter extends OncePerRequestFilter {
     private final ObjectMapper objectMapper;
     private final FileService fileService;
 
-
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
         String uri = request.getRequestURI();
 
-        // Check if the request is a JSON request
         if ("application/json".equalsIgnoreCase(request.getContentType())) {
             try {
                 String jsonBody = new String(request.getInputStream().readAllBytes());
                 Map<String, Object> jsonMap = objectMapper.readValue(jsonBody, Map.class);
 
-                // Process upload file request, need to add a new endpoint for this
-                if ("/api/v1/jsonfile/upload".equals(uri)) {
-                    FileUploadResponseDto responseDto = processJsonFileUpload(jsonMap);         // If file upload uri, process JSON file upload
-                    request.setAttribute("fileUploadResult", responseDto);                // Set file upload result as request attribute
-                } else {
-                    for (Map.Entry<String, Object> entry : jsonMap.entrySet()) {
-                        request.setAttribute(entry.getKey(), entry.getValue());                 // Set JSON attributes as request attributes
-                    }
+                if ("/api/v1/submit/total".equals(uri)) {
+                    processJsonFileUpload(jsonMap, request);
+                } else if ("/api/v1/jsonfile/upload".equals(uri)) {
+                    FileUploadResponseDto responseDto = fileService.uploadFile((MultipartFile) jsonMap.get("file"));
+                    request.setAttribute("fileUploadResult", responseDto);
                 }
 
+                for (Map.Entry<String, Object> entry : jsonMap.entrySet()) {
+                    request.setAttribute(entry.getKey(), entry.getValue());
+                }
             } catch (Exception e) {
                 log.error("Error processing JSON request: {}", e.getMessage(), e);
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
@@ -60,30 +60,28 @@ public class JsonFilter extends OncePerRequestFilter {
             }
         }
 
-        // Continue the filter chain
         filterChain.doFilter(request, response);
     }
 
-    // Process JSON file upload
-    private FileUploadResponseDto processJsonFileUpload(Map<String, Object> jsonMap) throws IOException {
-        String fileName = (String) jsonMap.get("file_name");
-        String fileType = (String) jsonMap.get("file_type");
-        Integer fileSize = (Integer) jsonMap.get("file_size");
-        String fileData = (String) jsonMap.get("file_data");
+    private void processJsonFileUpload(Map<String, Object> jsonMap, HttpServletRequest request) throws IOException {
+        List<Map<String, Object>> files = (List<Map<String, Object>>) jsonMap.get("file");
+        List<FileUploadResponseDto> uploadResults = new ArrayList<>();
 
-        // Decode base64 file data and create MultipartFile to save at path
-        if (fileName != null && fileType != null && fileSize != null && fileData != null) {
-            byte[] decodedFile = Base64.getDecoder().decode(fileData);
+        for (Map<String, Object> fileData : files) {
+            String fileName = (String) fileData.get("file_name");
+            String fileType = (String) fileData.get("file_type");
+            Long fileSize = Long.valueOf(fileData.get("file_size").toString());
+            String fileDataStr = (String) fileData.get("file_data");
+            String pathType = (String) fileData.get("path_type");
+
+            byte[] decodedFile = Base64.getDecoder().decode(fileDataStr);
             MultipartFile multipartFile = new MockMultipartFile(fileName, fileName, fileType, decodedFile);
 
-            // Upload file and return response
-            FileUploadResponseDto responseDto = fileService.uploadFile(multipartFile);                      // Upload file at Path
-            return responseDto;
-        } else {
-            log.error("Invalid file data received");
-            throw new CommonException(ErrorCode.FILE_UPLOAD_FAILED);
+            FileUploadResponseDto responseDto = fileService.uploadFileWithPathType(multipartFile, pathType);
+            uploadResults.add(responseDto);
         }
-    }
 
+        request.setAttribute("fileUploadResults", uploadResults);
+    }
 }
 
