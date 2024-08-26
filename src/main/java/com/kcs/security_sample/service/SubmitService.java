@@ -1,5 +1,7 @@
 package com.kcs.security_sample.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kcs.security_sample.dto.common.ResponseDto;
 import com.kcs.security_sample.dto.request.FormDataSubmitRequestDto;
 import com.kcs.security_sample.dto.request.TotalRequestDto;
@@ -13,6 +15,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 
@@ -20,6 +24,8 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class SubmitService {
+    private final ObjectMapper objectMapper;
+
     public SubmitResponseDto processDangerSubmit(String inputText) {
         return new SubmitResponseDto(inputText);
     }
@@ -49,6 +55,21 @@ public class SubmitService {
         } else {
             log.error("File upload result not found in request attributes");
             return ResponseDto.fail(new CommonException(ErrorCode.INTERNAL_SERVER_ERROR));
+        }
+    }
+
+    public TotalRequestDto buildTotalRequestDto(HttpServletRequest request) {
+        try {
+            TotalRequestDto.PostData postData = objectMapper.convertValue(request.getAttribute("post"), TotalRequestDto.PostData.class);
+            LocalDate date = LocalDate.parse((String) request.getAttribute("date"));
+            LocalTime hour = LocalTime.parse((String) request.getAttribute("hour"));
+            List<TotalRequestDto.FileData> fileData = objectMapper.convertValue(request.getAttribute("file"),
+                    new TypeReference<List<TotalRequestDto.FileData>>() {});
+
+            return new TotalRequestDto(postData, date, hour, fileData);
+        } catch (Exception e) {
+            log.error("Error building TotalRequestDto", e);
+            throw new CommonException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
     }
 }

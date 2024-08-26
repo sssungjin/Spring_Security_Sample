@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kcs.security_sample.dto.response.FileUploadResponseDto;
 import com.kcs.security_sample.exception.CommonException;
 import com.kcs.security_sample.exception.ErrorCode;
+import com.kcs.security_sample.security.details.CachedBodyHttpServletRequest;
 import com.kcs.security_sample.service.FileService;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
@@ -12,6 +13,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.mock.web.MockMultipartFile;
@@ -38,30 +42,29 @@ public class JsonFilter extends OncePerRequestFilter {
         String uri = request.getRequestURI();
 
         if ("application/json".equalsIgnoreCase(request.getContentType())) {
-            try {
-                String jsonBody = new String(request.getInputStream().readAllBytes());
-                Map<String, Object> jsonMap = objectMapper.readValue(jsonBody, Map.class);
+            CachedBodyHttpServletRequest cachedBodyHttpServletRequest = new CachedBodyHttpServletRequest(request);
 
-                if ("/api/v1/submit/total".equals(uri)) {
-                    processJsonFileUpload(jsonMap, request);
-                } else if ("/api/v1/jsonfile/upload".equals(uri)) {
-                    FileUploadResponseDto responseDto = fileService.uploadFile((MultipartFile) jsonMap.get("file"));
-                    request.setAttribute("fileUploadResult", responseDto);
-                }
+            String jsonBody = new String(cachedBodyHttpServletRequest.getInputStream().readAllBytes());
+            Map<String, Object> jsonMap = objectMapper.readValue(jsonBody, Map.class);
 
-                for (Map.Entry<String, Object> entry : jsonMap.entrySet()) {
-                    request.setAttribute(entry.getKey(), entry.getValue());
-                }
-            } catch (Exception e) {
-                log.error("Error processing JSON request: {}", e.getMessage(), e);
-                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                response.getWriter().write("Invalid JSON or processing error");
-                return;
+            if ("/api/v1/submit/total".equals(uri)) {
+                processJsonFileUpload(jsonMap, request);
+            } else if ("/api/v1/jsonfile/upload".equals(uri)) {
+                FileUploadResponseDto responseDto = fileService.uploadFile((MultipartFile) jsonMap.get("file"));
+                request.setAttribute("fileUploadResult", responseDto);
             }
-        }
 
-        filterChain.doFilter(request, response);
+            for (Map.Entry<String, Object> entry : jsonMap.entrySet()) {
+                request.setAttribute(entry.getKey(), entry.getValue());
+            }
+
+            // 캐싱된 요청을 다음 필터로 전달
+            filterChain.doFilter(cachedBodyHttpServletRequest, response);
+        } else {
+            filterChain.doFilter(request, response);
+        }
     }
+
 
     private void processJsonFileUpload(Map<String, Object> jsonMap, HttpServletRequest request) throws IOException {
         List<Map<String, Object>> files = (List<Map<String, Object>>) jsonMap.get("file");

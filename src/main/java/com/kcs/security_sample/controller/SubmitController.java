@@ -1,6 +1,5 @@
 package com.kcs.security_sample.controller;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.kcs.security_sample.dto.request.FormDataSubmitRequestDto;
 import com.kcs.security_sample.dto.request.TotalRequestDto;
 import com.kcs.security_sample.dto.response.FileUploadResponseDto;
@@ -33,7 +32,6 @@ import java.util.stream.Collectors;
 public class SubmitController {
 
     private final SubmitService submitService;
-    private final ObjectMapper objectMapper;
     private final Validator validator;
 
     @PostMapping("/submit/danger")
@@ -50,6 +48,8 @@ public class SubmitController {
 
     @PostMapping("/submit/formdata")
     public ResponseDto<?> formDataSubmit(@ModelAttribute FormDataSubmitRequestDto formDataSubmitDto, Authentication authentication) {
+        log.info("formDataSubmitDto {}", formDataSubmitDto);
+
         log.info("Form data submit attempt with input: {}", formDataSubmitDto.text());
         try {
             SubmitResponseDto response = submitService.processFormDataSubmit(formDataSubmitDto);
@@ -81,15 +81,20 @@ public class SubmitController {
     }
 
     @PostMapping("/submit/total")
-    public ResponseDto<?> totalSubmit(HttpServletRequest request) {
+    public ResponseDto<?> totalSubmit(@RequestBody TotalRequestDto totalRequestDtoBody, HttpServletRequest request) {
         try {
-            TotalRequestDto.PostData postData = objectMapper.convertValue(request.getAttribute("post"), TotalRequestDto.PostData.class);
-            LocalDate date = LocalDate.parse((String) request.getAttribute("date"));
-            LocalTime hour = LocalTime.parse((String) request.getAttribute("hour"));
-            List<TotalRequestDto.FileData> fileData = objectMapper.convertValue(request.getAttribute("file"),
-                    new TypeReference<List<TotalRequestDto.FileData>>() {});
+            log.info("Total submit attempt with request attributes");
 
-            TotalRequestDto totalRequestDto = new TotalRequestDto(postData, date, hour, fileData);
+            //log.info("totalRequestDto2 {}", totalRequestDto2);
+            log.info("request {}", request.getAttribute("post"));
+            log.info("request {}", request.getAttribute("date"));
+            log.info("request {}", request.getAttribute("hour"));
+            log.info("request {}", request.getAttribute("file"));
+
+            log.info("totalRequestDtoBody {}", totalRequestDtoBody);
+
+
+            TotalRequestDto totalRequestDto = submitService.buildTotalRequestDto(request);
 
             Set<ConstraintViolation<TotalRequestDto>> violations = validator.validate(totalRequestDto);
             if (!violations.isEmpty()) {
@@ -100,13 +105,12 @@ public class SubmitController {
                 return ResponseDto.fail(new CommonException(ErrorCode.INVALID_INPUT));
             }
 
-            log.info("Total submit attempt with input: {}", totalRequestDto);
             List<FileUploadResponseDto> fileUploadResults = (List<FileUploadResponseDto>) request.getAttribute("fileUploadResults");
             TotalResponseDto response = submitService.processTotalSubmit(totalRequestDto, fileUploadResults);
             return ResponseDto.ok(response);
         } catch (Exception e) {
             log.error("Error processing total submit", e);
-            return ResponseDto.fail(new CommonException(ErrorCode.INTERNAL_SERVER_ERROR));
+            return ResponseDto.fail(new CommonException(ErrorCode.INVALID_INPUT));
         }
     }
 }
