@@ -34,6 +34,11 @@ public class SubmitController {
     private final SubmitService submitService;
     private final Validator validator;
 
+    /**
+     * Submits a danger form
+     * @param inputText the input text from the form (json)
+     * @return a response containing the submit result
+     */
     @PostMapping("/submit/danger")
     public ResponseDto<?> dangerSubmit(@RequestAttribute("input_text") String inputText) {
         log.info("Danger submit attempt with input: {}", inputText);
@@ -46,6 +51,12 @@ public class SubmitController {
         }
     }
 
+    /**
+     * Submits a form data
+     * @param formDataSubmitDto the form data submit request DTO (form-data)
+     * @param authentication the authentication object
+     * @return a response containing the submit result
+     */
     @PostMapping("/submit/formdata")
     public ResponseDto<?> formDataSubmit(@ModelAttribute FormDataSubmitRequestDto formDataSubmitDto, Authentication authentication) {
         log.info("formDataSubmitDto {}", formDataSubmitDto);
@@ -60,6 +71,11 @@ public class SubmitController {
         }
     }
 
+
+    /**
+     * Creates a settlement (dummy method just to test the filter, permission)
+     * @return
+     */
     @GetMapping("/submit/create")
     public ResponseDto<?> createSettlement() {
         try {
@@ -70,6 +86,10 @@ public class SubmitController {
         }
     }
 
+    /**
+     * Deletes a settlement (dummy method just to test the filter, permission)
+     * @return
+     */
     @DeleteMapping("/submit/delete")
     public ResponseDto<?> deleteSettlement() {
         try {
@@ -80,6 +100,12 @@ public class SubmitController {
         }
     }
 
+    /**
+     * Submits a total form
+     * @param totalRequestDtoBody the total request DTO (cached json)
+     * @param request the request object
+     * @return a response containing the submit result
+     */
     @PostMapping("/submit/total")
     public ResponseDto<?> totalSubmit(@RequestBody TotalRequestDto totalRequestDtoBody, HttpServletRequest request) {
         try {
@@ -103,16 +129,18 @@ public class SubmitController {
         }
     }
 
-
-    @GetMapping("/xss-test")
-    public String xssTest(@RequestParam String input) {
-        return input;
-    }
-
+    /**
+     * Test Xss attack, by parameter input
+     * @param request
+     * @return
+     * example: http://localhost:8080/api/v1/example?param1=<script>alert('XSS')</script>&param2=value1&param2=<img src=x onerror=alert('XSS')>
+     */
     @GetMapping("/example")
     public String exampleMethod(HttpServletRequest request) {
         String param1 = (String) request.getAttribute("param1");
         String[] param2Array = (String[]) request.getAttribute("param2");
-        return param1 + " " + String.join(" ", param2Array);
+        String param1Original = (String) request.getAttribute("param1_original");
+        String[] param2OriginalArray = (String[]) request.getAttribute("param2_original");
+        return " param1: " + param1 + "\n param2: " + String.join("\n", param2Array) + "\n param1_original: " + param1Original + "\n param2_original: " + String.join(", ", param2OriginalArray);
     }
 }

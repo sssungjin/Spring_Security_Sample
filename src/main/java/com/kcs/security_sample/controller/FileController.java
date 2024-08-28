@@ -19,16 +19,32 @@ import java.io.IOException;
 public class FileController {
     private final SubmitService submitService;
     private final FileService fileService;
+
+    /**
+     * Uploads a file to the server
+     * @param request the request containing the file
+     * @return a response containing the file upload result
+     */
     @PostMapping("/multipart/upload")
     public ResponseDto<?> uploadFile(HttpServletRequest request) {
         return submitService.processFileUpload(request);
     }
 
+    /**
+     * Uploads a JSON file to the server
+     * @param request the request containing the JSON file
+     * @return a response containing the file upload result
+     */
     @PostMapping("/jsonfile/upload")
     public ResponseDto<?> uploadJsonFile(HttpServletRequest request) {
         return submitService.processFileUpload(request);
     }
 
+    /**
+     * Deletes a file from the server
+     * @param fileId the ID of the file to delete
+     * @return a response indicating whether the file was deleted successfully
+     */
     @DeleteMapping("/file/{fileId}")
     public ResponseDto<?> deleteFile(@PathVariable Long fileId) {
         try {
@@ -40,6 +56,11 @@ public class FileController {
         }
     }
 
+    /**
+     * Deletes a file from the server
+     * @param fileId the ID of the file to delete
+     * @return a response indicating whether the file was deleted successfully
+     */
     @DeleteMapping("/file/forceDelete/{fileId}")
     public ResponseDto<?> deleteFileForce(@PathVariable Long fileId) {
         try {

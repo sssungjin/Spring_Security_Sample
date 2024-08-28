@@ -15,6 +15,12 @@ import org.springframework.web.bind.annotation.*;
 public class LoginController {
     private final UserService userService;
 
+    /**
+     * Logs in a user
+     * @param accountId the account ID of the user
+     * @param password the password of the user
+     * @return a response containing the login result
+     */
     @PostMapping("/login")
     public ResponseDto<?> login(@RequestAttribute("account_id") String accountId,
                                 @RequestAttribute("password") String password) {
