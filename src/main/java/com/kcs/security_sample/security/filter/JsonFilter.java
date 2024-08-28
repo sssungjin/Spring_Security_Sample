@@ -3,6 +3,7 @@ package com.kcs.security_sample.security.filter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kcs.security_sample.dto.response.FileUploadResponseDto;
 import com.kcs.security_sample.security.details.CachedBodyHttpServletRequest;
+import com.kcs.security_sample.security.details.CustomMultipartFile;
 import com.kcs.security_sample.service.FileService;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,7 +14,6 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.mock.web.MockMultipartFile;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -48,8 +48,24 @@ public class JsonFilter extends OncePerRequestFilter {
             if ("/api/v1/submit/total".equals(uri)) {
                 processJsonFileUpload(jsonMap, request);
             } else if ("/api/v1/jsonfile/upload".equals(uri)) {
-                FileUploadResponseDto responseDto = fileService.uploadFile((MultipartFile) jsonMap.get("file"));
-                request.setAttribute("fileUploadResult", responseDto);
+                Map<String, Object> fileData = (Map<String, Object>) jsonMap.get("file");
+                if (fileData != null) {
+                    String fileName = (String) fileData.get("file_name");
+                    String fileType = (String) fileData.get("file_type");
+                    String fileDataStr = (String) fileData.get("file_data");
+
+                    if (fileName != null && fileDataStr != null) {
+                        byte[] decodedFile = Base64.getDecoder().decode(fileDataStr);
+                        MultipartFile multipartFile = new CustomMultipartFile(fileName, fileName, fileType, decodedFile);
+
+                        FileUploadResponseDto responseDto = fileService.uploadFile(multipartFile);
+                        request.setAttribute("fileUploadResult", responseDto);
+                    } else {
+                        throw new IllegalArgumentException("File name or file data is missing");
+                    }
+                } else {
+                    throw new IllegalArgumentException("File data is missing in the request");
+                }
             }
 
             for (Map.Entry<String, Object> entry : jsonMap.entrySet()) {
@@ -76,7 +92,9 @@ public class JsonFilter extends OncePerRequestFilter {
             String pathType = (String) fileData.get("path_type");
 
             byte[] decodedFile = Base64.getDecoder().decode(fileDataStr);
-            MultipartFile multipartFile = new MockMultipartFile(fileName, fileName, fileType, decodedFile);
+
+            MultipartFile multipartFile = new CustomMultipartFile(fileName, fileName, fileType, decodedFile);
+
 
             FileUploadResponseDto responseDto = fileService.uploadFileWithPathType(multipartFile, pathType);
             uploadResults.add(responseDto);

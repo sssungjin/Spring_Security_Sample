@@ -34,6 +34,7 @@ public class XssPreventionFilter extends OncePerRequestFilter {
         if (request instanceof MultipartHttpServletRequest) {
             filterChain.doFilter(request, response);
         } else if ("application/json".equalsIgnoreCase(request.getContentType())) {
+            log.info("XSS Prevention Filter: JSON request detected");
             filterChain.doFilter(request, response);
         } else {
             XssPreventionRequestWrapper wrappedRequest = new XssPreventionRequestWrapper(request, objectMapper);
