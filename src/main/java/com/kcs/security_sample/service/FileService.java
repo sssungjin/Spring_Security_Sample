@@ -114,6 +114,30 @@ public class FileService {
                 .orElseThrow(() -> new CommonException(ErrorCode.FILE_NOT_FOUND));
 
         Path filePath = Paths.get(fileInfo.getPath());
+
+        // 파일 권한 확인
+        if (!Files.isWritable(filePath)) {
+            throw new CommonException(ErrorCode.FILE_DELETE_PERMISSION_DENIED);
+        }
+
+        Files.deleteIfExists(filePath);
+
+        fileInfoRepository.delete(fileInfo);
+    }
+
+    @Transactional
+    public void deleteFileForce(Long fileId) throws IOException {
+        FileInfo fileInfo = fileInfoRepository.findById(fileId)
+                .orElseThrow(() -> new CommonException(ErrorCode.FILE_NOT_FOUND));
+
+        Path filePath = Paths.get(fileInfo.getPath());
+
+        // 파일 권한 확인
+        if (!Files.isWritable(filePath)) {
+            // 쓰기 권한이 없다면 권한 부여
+            Files.setAttribute(filePath, "dos:readonly", false);
+        }
+
         Files.deleteIfExists(filePath);
 
         fileInfoRepository.delete(fileInfo);
@@ -139,7 +163,7 @@ public class FileService {
         if (!file.setReadable(true, false)) {
             throw new CommonException(ErrorCode.FILE_PERMISSION_SETTING_FAILED);
         }
-        if (!file.setWritable(true, true)) {
+        if (!file.setWritable(false, false)) {
             throw new CommonException(ErrorCode.FILE_PERMISSION_SETTING_FAILED);
         }
         // Window os does not support setExecutable

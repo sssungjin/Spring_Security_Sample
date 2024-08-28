@@ -28,4 +28,26 @@ public class FileController {
     public ResponseDto<?> uploadJsonFile(HttpServletRequest request) {
         return submitService.processFileUpload(request);
     }
+
+    @DeleteMapping("/file/{fileId}")
+    public ResponseDto<?> deleteFile(@PathVariable Long fileId) {
+        try {
+            fileService.deleteFile(fileId);
+            return ResponseDto.ok("File deleted successfully");
+        } catch (IOException e) {
+            log.error("Error deleting file", e);
+            return ResponseDto.fail(new CommonException(ErrorCode.FILE_DELETE_FAILED));
+        }
+    }
+
+    @DeleteMapping("/file/forceDelete/{fileId}")
+    public ResponseDto<?> deleteFileForce(@PathVariable Long fileId) {
+        try {
+            fileService.deleteFileForce(fileId);
+            return ResponseDto.ok("File deleted successfully");
+        } catch (IOException e) {
+            log.error("Error deleting file", e);
+            return ResponseDto.fail(new CommonException(ErrorCode.FILE_DELETE_FAILED));
+        }
+    }
 }

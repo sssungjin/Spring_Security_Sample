@@ -21,6 +21,7 @@ public enum ErrorCode {
     FILE_SIZE_EXCEEDED(40011, HttpStatus.BAD_REQUEST, "파일 크기가 허용치를 초과하였습니다."),
     FILE_NOT_FOUND(40012, HttpStatus.BAD_REQUEST, "파일을 찾을 수 없습니다."),
     FILE_DELETE_FAILED(40013, HttpStatus.BAD_REQUEST, "파일 삭제에 실패하였습니다."),
+    FILE_DELETE_PERMISSION_DENIED(40014, HttpStatus.BAD_REQUEST, "파일 삭제 권한이 없습니다."),
 
 
     UNAUTHORIZED(40100, HttpStatus.UNAUTHORIZED, "인증되지 않은 사용자입니다."),
