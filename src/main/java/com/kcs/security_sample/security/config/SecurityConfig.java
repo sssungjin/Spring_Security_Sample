@@ -75,7 +75,8 @@ public class SecurityConfig {
                             .requestMatchers(
                                     "/login", "/api/v1/login",
                                     "/api/v1/submit/danger", "/api/v1/submit/formdata",
-                                    "/api/v1/jsonfile/upload", "/api/v1/multipart/upload", "/api/v1/submit/total")
+                                    "/api/v1/jsonfile/upload", "/api/v1/multipart/upload",
+                                    "/api/v1/submit/total", "/api/v1/submit/file/*")
                             .permitAll();
                     // Set up permissions for each URL, ROLE from DB
                     urlRoles.forEach((url, roles) -> {

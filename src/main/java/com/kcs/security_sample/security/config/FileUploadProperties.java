@@ -15,4 +15,8 @@ public class FileUploadProperties {
     // file upload properties
     private String path;
     private List<String> allowedExtensions;
+
+    // Additional properties
+    private long maxFileSize;
+    private List<String> allowedMimeTypes;
 }

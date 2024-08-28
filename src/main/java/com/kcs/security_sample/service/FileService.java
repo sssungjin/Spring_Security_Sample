@@ -30,6 +30,10 @@ public class FileService {
 
     @Transactional
     public FileUploadResponseDto uploadFileWithPathType(MultipartFile file, String pathType) throws IOException {
+        if (file.getSize() > fileUploadProperties.getMaxFileSize()) {
+            throw new CommonException(ErrorCode.FILE_SIZE_EXCEEDED);
+        }
+
         FilePath filePath = filePathRepository.findByPathType(pathType)
                 .orElseThrow(() -> new CommonException(ErrorCode.INVALID_PATH_TYPE));
 
@@ -102,6 +106,17 @@ public class FileService {
                 savedFileInfo.getSize(),
                 savedFileInfo.getContentType()
         );
+    }
+
+    @Transactional
+    public void deleteFile(Long fileId) throws IOException {
+        FileInfo fileInfo = fileInfoRepository.findById(fileId)
+                .orElseThrow(() -> new CommonException(ErrorCode.FILE_NOT_FOUND));
+
+        Path filePath = Paths.get(fileInfo.getPath());
+        Files.deleteIfExists(filePath);
+
+        fileInfoRepository.delete(fileInfo);
     }
 
     private String getFileExtension(String filename) {

@@ -18,6 +18,9 @@ public enum ErrorCode {
     INVALID_INPUT(40008, HttpStatus.BAD_REQUEST, "유효하지 않은 입력입니다."),
     INVALID_PATH_TYPE(40009, HttpStatus.BAD_REQUEST, "유효하지 않은 Path Type 입니다."),
     EMPTY_FILE(40010, HttpStatus.BAD_REQUEST, "업로드 할 파일이 존재하지 않습니다."),
+    FILE_SIZE_EXCEEDED(40011, HttpStatus.BAD_REQUEST, "파일 크기가 허용치를 초과하였습니다."),
+    FILE_NOT_FOUND(40012, HttpStatus.BAD_REQUEST, "파일을 찾을 수 없습니다."),
+    FILE_DELETE_FAILED(40013, HttpStatus.BAD_REQUEST, "파일 삭제에 실패하였습니다."),
 
 
     UNAUTHORIZED(40100, HttpStatus.UNAUTHORIZED, "인증되지 않은 사용자입니다."),
