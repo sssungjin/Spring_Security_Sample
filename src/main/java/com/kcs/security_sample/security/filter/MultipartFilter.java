@@ -65,16 +65,16 @@ public class MultipartFilter extends OncePerRequestFilter {
 
         // Process file upload
         MultipartFile file = multipartRequest.getFile("file");
-        if (file != null) {
-            try {
-                FileUploadResponseDto responseDto = fileService.uploadFile(file);                // Upload the file
-                multipartRequest.setAttribute("fileUploadResult", responseDto);           // Set the file upload result as a request attribute
-            } catch (Exception e) {
-                log.error("Error during file upload: {}", e.getMessage(), e);
-                throw new CommonException(ErrorCode.FILE_UPLOAD_FAILED);
-            }
-        } else {
-            log.warn("No file found in the multipart request");
+        //if (file != null) {
+        try {
+            FileUploadResponseDto responseDto = fileService.uploadFile(file);                // Upload the file
+            multipartRequest.setAttribute("fileUploadResult", responseDto);           // Set the file upload result as a request attribute
+        } catch (Exception e) {
+            log.error("Error during file upload: {}", e.getMessage(), e);
+            throw new CommonException(ErrorCode.EMPTY_FILE);
         }
+//        } else {
+//            log.warn("No file found in the multipart request");
+//        }
     }
 }

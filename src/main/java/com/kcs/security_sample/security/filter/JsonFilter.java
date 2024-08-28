@@ -2,8 +2,6 @@ package com.kcs.security_sample.security.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kcs.security_sample.dto.response.FileUploadResponseDto;
-import com.kcs.security_sample.exception.CommonException;
-import com.kcs.security_sample.exception.ErrorCode;
 import com.kcs.security_sample.security.details.CachedBodyHttpServletRequest;
 import com.kcs.security_sample.service.FileService;
 import jakarta.servlet.*;
@@ -13,9 +11,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.mock.web.MockMultipartFile;
