@@ -15,6 +15,7 @@ import java.util.Map;
 public class XssPreventionRequestWrapper extends HttpServletRequestWrapper {
     private final ObjectMapper objectMapper;
     private Map<String, Object> sanitizedAttributes = new HashMap<>();
+    private Map<String, Object> originalAttributes = new HashMap<>();
 
     public XssPreventionRequestWrapper(HttpServletRequest request, ObjectMapper objectMapper) {
         super(request);
@@ -30,11 +31,16 @@ public class XssPreventionRequestWrapper extends HttpServletRequestWrapper {
                 sanitizedValues[i] = StringEscapeUtils.escapeHtml4(entry.getValue()[i]);
             }
             sanitizedAttributes.put(entry.getKey(), sanitizedValues.length == 1 ? sanitizedValues[0] : sanitizedValues);
+            originalAttributes.put(entry.getKey(), entry.getValue().length == 1 ? entry.getValue()[0] : entry.getValue());
         }
     }
 
     @Override
     public Object getAttribute(String name) {
+        if (name.endsWith("_original")) {
+            String originalName = name.substring(0, name.length() - 9);
+            return originalAttributes.get(originalName);
+        }
         Object sanitizedValue = sanitizedAttributes.get(name);
         return sanitizedValue != null ? sanitizedValue : super.getAttribute(name);
     }
@@ -78,11 +84,12 @@ public class XssPreventionRequestWrapper extends HttpServletRequestWrapper {
         if (contentType != null && contentType.contains("application/json")) {
             String body = getRequestBody(super.getReader());
             Map<String, Object> json = objectMapper.readValue(body, Map.class);
-            sanitizeJson(json);
-            String sanitizedBody = objectMapper.writeValueAsString(json);
+            Map<String, Object> sanitizedJson = new HashMap<>(json);
+            sanitizeJson(sanitizedJson);
+            String sanitizedBody = objectMapper.writeValueAsString(sanitizedJson);
 
-            // Add sanitized JSON to attributes
-            sanitizedAttributes.putAll(json);
+            sanitizedAttributes.putAll(sanitizedJson);
+            originalAttributes.putAll(json);
 
             return new BufferedReader(new StringReader(sanitizedBody));
         }

@@ -14,12 +14,10 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.multipart.MultipartFile;
+import org.apache.commons.text.StringEscapeUtils;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Base64;
+import java.util.*;
 
 @Component
 @RequiredArgsConstructor
@@ -38,11 +36,11 @@ public class JsonFilter extends OncePerRequestFilter {
             CachedBodyHttpServletRequest cachedBodyHttpServletRequest = new CachedBodyHttpServletRequest(request);
             String jsonBody = new String(cachedBodyHttpServletRequest.getInputStream().readAllBytes());
 
-            // Apply XSS escaping to the JSON body
             Map<String, Object> jsonMap = objectMapper.readValue(jsonBody, Map.class);
-            String escapedJsonBody = objectMapper.writeValueAsString(jsonMap);
+            Map<String, Object> sanitizedJsonMap = new HashMap<>(jsonMap);
 
-            // Create a new CachedBodyHttpServletRequest with the escaped JSON body
+            sanitizeJson(sanitizedJsonMap);
+            String escapedJsonBody = objectMapper.writeValueAsString(sanitizedJsonMap);
             cachedBodyHttpServletRequest = new CachedBodyHttpServletRequest(request, escapedJsonBody.getBytes());
 
             if ("/api/v1/submit/total".equals(uri)) {
@@ -68,14 +66,37 @@ public class JsonFilter extends OncePerRequestFilter {
                 }
             }
 
-            for (Map.Entry<String, Object> entry : jsonMap.entrySet()) {
+            for (Map.Entry<String, Object> entry : sanitizedJsonMap.entrySet()) {
                 request.setAttribute(entry.getKey(), entry.getValue());
+                request.setAttribute(entry.getKey() + "_original", jsonMap.get(entry.getKey()));
             }
-
-            // Pass the cached request with escaped body to the next filter
             filterChain.doFilter(cachedBodyHttpServletRequest, response);
         } else {
             filterChain.doFilter(request, response);
+        }
+    }
+
+    private void sanitizeJson(Map<String, Object> json) {
+        for (Map.Entry<String, Object> entry : json.entrySet()) {
+            if (entry.getValue() instanceof String) {
+                entry.setValue(StringEscapeUtils.escapeHtml4((String) entry.getValue()));
+            } else if (entry.getValue() instanceof Map) {
+                sanitizeJson((Map<String, Object>) entry.getValue());
+            } else if (entry.getValue() instanceof List) {
+                sanitizeList((List<Object>) entry.getValue());
+            }
+        }
+    }
+
+    private void sanitizeList(List<Object> list) {
+        for (int i = 0; i < list.size(); i++) {
+            if (list.get(i) instanceof String) {
+                list.set(i, StringEscapeUtils.escapeHtml4((String) list.get(i)));
+            } else if (list.get(i) instanceof Map) {
+                sanitizeJson((Map<String, Object>) list.get(i));
+            } else if (list.get(i) instanceof List) {
+                sanitizeList((List<Object>) list.get(i));
+            }
         }
     }
 
