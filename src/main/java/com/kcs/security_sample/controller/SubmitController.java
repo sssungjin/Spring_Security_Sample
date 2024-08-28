@@ -83,17 +83,6 @@ public class SubmitController {
     @PostMapping("/submit/total")
     public ResponseDto<?> totalSubmit(@RequestBody TotalRequestDto totalRequestDtoBody, HttpServletRequest request) {
         try {
-            log.info("Total submit attempt with request attributes");
-
-            //log.info("totalRequestDto2 {}", totalRequestDto2);
-            log.info("request {}", request.getAttribute("post"));
-            log.info("request {}", request.getAttribute("date"));
-            log.info("request {}", request.getAttribute("hour"));
-            log.info("request {}", request.getAttribute("file"));
-
-            log.info("totalRequestDtoBody {}", totalRequestDtoBody);
-
-
             TotalRequestDto totalRequestDto = submitService.buildTotalRequestDto(request);
 
             Set<ConstraintViolation<TotalRequestDto>> violations = validator.validate(totalRequestDto);
@@ -112,5 +101,18 @@ public class SubmitController {
             log.error("Error processing total submit", e);
             return ResponseDto.fail(new CommonException(ErrorCode.INVALID_INPUT));
         }
+    }
+
+
+    @GetMapping("/xss-test")
+    public String xssTest(@RequestParam String input) {
+        return input;
+    }
+
+    @GetMapping("/example")
+    public String exampleMethod(HttpServletRequest request) {
+        String param1 = (String) request.getAttribute("param1");
+        String[] param2Array = (String[]) request.getAttribute("param2");
+        return param1 + " " + String.join(" ", param2Array);
     }
 }

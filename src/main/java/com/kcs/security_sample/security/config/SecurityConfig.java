@@ -4,6 +4,7 @@ import com.kcs.security_sample.dto.response.PermissionDto;
 import com.kcs.security_sample.security.filter.JsonFilter;
 import com.kcs.security_sample.security.filter.JwtAuthenticationFilter;
 import com.kcs.security_sample.security.filter.MultipartFilter;
+import com.kcs.security_sample.security.filter.XssPreventionFilter;
 import com.kcs.security_sample.security.service.CustomUserDetailService;
 import com.kcs.security_sample.security.service.JwtService;
 import com.kcs.security_sample.security.service.PermissionService;
@@ -30,9 +31,11 @@ import java.util.*;
 public class SecurityConfig {
     private final CustomUserDetailService customUserDetailService;
     private final JwtService jwtService;
+    private final PermissionService permissionService;
+
     private final MultipartFilter multipartFilter;
     private final JsonFilter jsonFilter;
-    private final PermissionService permissionService;
+    private final XssPreventionFilter xssPreventionFilter;
 
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
@@ -76,7 +79,8 @@ public class SecurityConfig {
                                     "/login", "/api/v1/login",
                                     "/api/v1/submit/danger", "/api/v1/submit/formdata",
                                     "/api/v1/jsonfile/upload", "/api/v1/multipart/upload",
-                                    "/api/v1/submit/total", "/api/v1/submit/file/*")
+                                    "/api/v1/submit/total", "/api/v1/submit/file/*",
+                                    "/api/v1/xss-test", "/api/v1/example")
                             .permitAll();
                     // Set up permissions for each URL, ROLE from DB
                     urlRoles.forEach((url, roles) -> {
@@ -86,6 +90,7 @@ public class SecurityConfig {
                     authorizeRequests.anyRequest().authenticated();
                 })
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class) // Add JWT filter before UsernamePasswordAuthenticationFilter
+                .addFilterBefore(xssPreventionFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(jsonFilter, JwtAuthenticationFilter.class)                              // Add JSON filter after JWT filter
                 .addFilterAfter(multipartFilter, JsonFilter.class);                                     // Add Multipart filter after JSON filter
 
